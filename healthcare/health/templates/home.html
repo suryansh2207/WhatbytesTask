@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Healthcare Management</title>
+    <script>
+        let accessToken = '';
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/auth/login/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await response.json();
+            accessToken = data.access;
+            alert('Login successful!');
+        }
+
+        async function addPatient() {
+            const name = document.getElementById('patientName').value;
+            const age = document.getElementById('patientAge').value;
+            const gender = document.getElementById('patientGender').value;
+
+            await fetch('/patients/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + accessToken
+                },
+                body: JSON.stringify({ name, age, gender })
+            });
+            alert('Patient added!');
+        }
+
+        async function getPatients() {
+            const response = await fetch('/patients/', {
+                headers: { 'Authorization': 'Bearer ' + accessToken }
+            });
+            const patients = await response.json();
+            const list = document.getElementById('patientList');
+            list.innerHTML = '';
+            patients.forEach(p => {
+                const item = document.createElement('li');
+                item.textContent = `${p.name} (Age: ${p.age}, Gender: ${p.gender}) `;
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = () => deletePatient(p.id);
+                item.appendChild(deleteBtn);
+                list.appendChild(item);
+            });
+        }
+
+        async function deletePatient(id) {
+            await fetch(`/patients/${id}/`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + accessToken }
+            });
+            alert('Patient deleted!');
+            getPatients();
+        }
+
+        async function addDoctor() {
+            const name = document.getElementById('doctorName').value;
+            const specialty = document.getElementById('doctorSpecialty').value;
+
+            await fetch('/doctors/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + accessToken
+                },
+                body: JSON.stringify({ name, specialty })
+            });
+            alert('Doctor added!');
+        }
+
+        async function getDoctors() {
+            const response = await fetch('/doctors/', {
+                headers: { 'Authorization': 'Bearer ' + accessToken }
+            });
+            const doctors = await response.json();
+            const list = document.getElementById('doctorList');
+            list.innerHTML = '';
+            doctors.forEach(d => {
+                const item = document.createElement('li');
+                item.textContent = `${d.name} (${d.specialty})`;
+                list.appendChild(item);
+            });
+        }
+
+        async function addMapping() {
+            const patientId = document.getElementById('mapPatientId').value;
+            const doctorId = document.getElementById('mapDoctorId').value;
+
+            await fetch('/mappings/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + accessToken
+                },
+                body: JSON.stringify({ patient: patientId, doctor: doctorId })
+            });
+            alert('Mapping added!');
+        }
+
+        async function getMappings() {
+            const response = await fetch('/mappings/', {
+                headers: { 'Authorization': 'Bearer ' + accessToken }
+            });
+            const mappings = await response.json();
+            const list = document.getElementById('mappingList');
+            list.innerHTML = '';
+            mappings.forEach(m => {
+                const item = document.createElement('li');
+                item.textContent = `Patient ID: ${m.patient}, Doctor ID: ${m.doctor}`;
+                list.appendChild(item);
+            });
+        }
+
+        async function getMappingsByPatient() {
+            const patientId = document.getElementById('mappingPatientId').value;
+            const response = await fetch(`/mappings/${patientId}/`, {
+                headers: { 'Authorization': 'Bearer ' + accessToken }
+            });
+            const mappings = await response.json();
+            const list = document.getElementById('mappingByPatientList');
+            list.innerHTML = '';
+            mappings.forEach(m => {
+                const item = document.createElement('li');
+                item.textContent = `Doctor ID: ${m.doctor}`;
+                list.appendChild(item);
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Healthcare Management System</h1>
+
+    <!-- Login Section -->
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+
+    <hr>
+
+    <!-- Patient Section -->
+    <h2>Patients</h2>
+    <input type="text" id="patientName" placeholder="Name">
+    <input type="number" id="patientAge" placeholder="Age">
+    <select id="patientGender">
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+    </select>
+    <button onclick="addPatient()">Add Patient</button>
+    <button onclick="getPatients()">Get All Patients</button>
+    <ul id="patientList"></ul>
+
+    <hr>
+
+    <!-- Doctor Section -->
+    <h2>Doctors</h2>
+    <input type="text" id="doctorName" placeholder="Name">
+    <input type="text" id="doctorSpecialty" placeholder="Specialty">
+    <button onclick="addDoctor()">Add Doctor</button>
+    <button onclick="getDoctors()">Get All Doctors</button>
+    <ul id="doctorList"></ul>
+
+    <hr>
+
+    <!-- Mapping Section -->
+    <h2>Patient-Doctor Mappings</h2>
+    <input type="number" id="mapPatientId" placeholder="Patient ID">
+    <input type="number" id="mapDoctorId" placeholder="Doctor ID">
+    <button onclick="addMapping()">Add Mapping</button>
+    <button onclick="getMappings()">Get All Mappings</button>
+    <ul id="mappingList"></ul>
+
+    <hr>
+
+    <!-- Get Mapping by Patient -->
+    <h2>Get Mappings By Patient</h2>
+    <input type="number" id="mappingPatientId" placeholder="Patient ID">
+    <button onclick="getMappingsByPatient()">Get Mappings</button>
+    <ul id="mappingByPatientList"></ul>
+
+</body>
+</html>
